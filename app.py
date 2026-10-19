@@ -574,21 +574,27 @@ else:
 
             # --- DYNAMIC CONDITIONAL UI FOR PLAYER PROPS VS TEAMS ---
             if bet_type == "Player Prop":
-                # Load players dynamically from your Ref_Data sheet
                 try:
                     df_ref = load_ref_data(client)
-                    df_sport_players = df_ref[(df_ref["Sport"] == sport) & (df_ref["Player_Name"] != "")]
+                    # Clean column names and data to avoid spacing/casing issues
+                    df_ref.columns = df_ref.columns.str.strip()
+                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
+                    df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
+                    
+                    # Filter matching sport
+                    current_sport_clean = str(sport).strip().upper()
+                    df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].lower() != "nan")]
                     available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
-                except Exception:
+                except Exception as e:
+                    st.error(f"Error loading Ref_Data: {e}")
                     available_players = []
 
                 if available_players:
                     selected_player = st.selectbox("Select Player", available_players, key="input_player")
-                    # Grab team automatically in the background
                     player_row = df_sport_players[df_sport_players["Player_Name"] == selected_player]
                     team = player_row["Team"].values[0] if not player_row.empty else ""
                 else:
-                    st.warning("No players found in Ref_Data sheet for this sport.")
+                    st.warning(f"No players found in Ref_Data sheet for Sport: '{sport}'.")
                     selected_player = ""
                     team = ""
             else:
