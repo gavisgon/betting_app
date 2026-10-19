@@ -35,14 +35,12 @@ def init_connection():
 
 client = init_connection()
 
-# Open Google Sheet Worksheets
 try:
-    sheet = client.open("Sports Betting App Data")
-    picks_worksheet = sheet.worksheet("Picks")
-    standings_worksheet = sheet.worksheet("Standings")
-    parlays_worksheet = sheet.worksheet("Parlays")
+    spreadsheet = client.open("Sports Betting App Data")
+    picks_worksheet = spreadsheet.worksheet("Picks")
+    ref_worksheet = spreadsheet.worksheet("Ref_Data")
 except Exception as e:
-    st.error(f"Could not connect to Google Sheet. Make sure worksheets exist. Error: {e}")
+    st.error(f"Error connecting to Google Sheets worksheets: {e}")
 
 # --- PLACE load_ref_data RIGHT HERE ---
 @st.cache_data(ttl=600)
