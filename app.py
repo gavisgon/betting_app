@@ -636,115 +636,115 @@ else:
             value = ""
 
 # --- DYNAMIC REF_DATA FILTERING FOR PLAYER PROPS ---
-if bet_type == "Player Prop":
-    try:
-        df_ref = load_ref_data(client)
-        df_ref.columns = df_ref.columns.str.strip()
-        df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
-        df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
-        df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
-        df_ref["Team"] = df_ref["Team"].astype(str).str.strip()
+    if bet_type == "Player Prop":
+        try:
+            df_ref = load_ref_data(client)
+            df_ref.columns = df_ref.columns.str.strip()
+            df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
+            df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
+            df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
+            df_ref["Team"] = df_ref["Team"].astype(str).str.strip()
 
-        current_sport_clean = str(sport).strip().upper()
-        
-        # Filter strictly by selected sport (Col A)
-        df_sport = df_ref[df_ref["Sport"] == current_sport_clean]
-        
-        # Get unique players (Col C) and props (Col B)
-        df_players = df_sport[(df_sport["Player_Name"] != "") & (df_sport["Player_Name"].str.lower() != "nan")]
-        available_players = sorted(df_players["Player_Name"].unique().tolist())
-        
-        df_props = df_sport[(df_sport["Prop_Type"] != "") & (df_sport["Prop_Type"].str.lower() != "nan")]
-        available_props = sorted(df_props["Prop_Type"].unique().tolist())
-
-    except Exception as e:
-        st.error(f"Error filtering Ref_Data: {e}")
-        available_players, available_props = [], []
-
-    if available_players and available_props:
-        selected_player = st.selectbox("Select Player", available_players, key="prop_selected_player")
-        selected_prop = st.selectbox("Prop Type", available_props, key="prop_selected_prop_type")
-
-        # Automatically resolve Team (Col D)
-        player_row = df_players[df_players["Player_Name"] == selected_player]
-        team = player_row["Team"].values[0] if not player_row.empty else ""
-    else:
-        st.warning(f"No reference data found for Sport: '{sport}'.")
-        selected_player, selected_prop, team = "", "", ""
-
-        if bet_type in ["Puck Line", "Run Line"]:
-            spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
-        elif bet_type in ["Spread"]:
-            spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
-        elif bet_type == "Player Prop" and selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
-            # Binary touchdown or goal scorer props don't need O/U or line values
-            ou_choice = "—"
-            value = ""
-        elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
-            ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="prop_input_ou")
-            value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="prop_input_val")
-
-            odds = st.number_input("Odds (e.g., -117)", value=-110, key="input_odds")
-
-            st.write("")
-            btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
+            current_sport_clean = str(sport).strip().upper()
             
-            if st.button("Submit Pick", use_container_width=True):
-                if bet_type == "Player Prop" and not selected_player:
-                    st.warning("Please select a player.")
-                elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
-                    st.warning("Please enter a line value (e.g., 0.5 SOG or 25.5 Pts).")
-                elif bet_type != "Player Prop" and not team:
-                    st.warning("Please select a team.")
-                else:
-                    # Build payload dictionary
-                    if bet_type == "Player Prop":
-                        team_val = team
-                        player_val = selected_player
-                        prop_val = selected_prop
-                        if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
-                            line_val = "Yes"
-                        else:
-                            line_val = f"{ou_choice} {value}".strip()
+            # Filter strictly by selected sport (Col A)
+            df_sport = df_ref[df_ref["Sport"] == current_sport_clean]
+            
+            # Get unique players (Col C) and props (Col B)
+            df_players = df_sport[(df_sport["Player_Name"] != "") & (df_sport["Player_Name"].str.lower() != "nan")]
+            available_players = sorted(df_players["Player_Name"].unique().tolist())
+            
+            df_props = df_sport[(df_sport["Prop_Type"] != "") & (df_sport["Prop_Type"].str.lower() != "nan")]
+            available_props = sorted(df_props["Prop_Type"].unique().tolist())
+
+        except Exception as e:
+            st.error(f"Error filtering Ref_Data: {e}")
+            available_players, available_props = [], []
+
+        if available_players and available_props:
+            selected_player = st.selectbox("Select Player", available_players, key="prop_selected_player")
+            selected_prop = st.selectbox("Prop Type", available_props, key="prop_selected_prop_type")
+
+            # Automatically resolve Team (Col D)
+            player_row = df_players[df_players["Player_Name"] == selected_player]
+            team = player_row["Team"].values[0] if not player_row.empty else ""
+        else:
+            st.warning(f"No reference data found for Sport: '{sport}'.")
+            selected_player, selected_prop, team = "", "", ""
+
+            if bet_type in ["Puck Line", "Run Line"]:
+                spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
+            elif bet_type in ["Spread"]:
+                spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
+            elif bet_type == "Player Prop" and selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                # Binary touchdown or goal scorer props don't need O/U or line values
+                ou_choice = "—"
+                value = ""
+            elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
+                ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="prop_input_ou")
+                value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="prop_input_val")
+
+                odds = st.number_input("Odds (e.g., -117)", value=-110, key="input_odds")
+
+                st.write("")
+                btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
+                
+                if st.button("Submit Pick", use_container_width=True):
+                    if bet_type == "Player Prop" and not selected_player:
+                        st.warning("Please select a player.")
+                    elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
+                        st.warning("Please enter a line value (e.g., 0.5 SOG or 25.5 Pts).")
+                    elif bet_type != "Player Prop" and not team:
+                        st.warning("Please select a team.")
                     else:
-                        team_val = team
-                        player_val = "—"
-                        prop_val = "—"
-                        line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
+                        # Build payload dictionary
+                        if bet_type == "Player Prop":
+                            team_val = team
+                            player_val = selected_player
+                            prop_val = selected_prop
+                            if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                                line_val = "Yes"
+                            else:
+                                line_val = f"{ou_choice} {value}".strip()
+                        else:
+                            team_val = team
+                            player_val = "—"
+                            prop_val = "—"
+                            line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
 
-                    row_dict = {
-                        "Date": selected_date_str,
-                        "User": current_user,
-                        "Sport": sport,
-                        "Bet Type": bet_type,
-                        "Team": team_val,
-                        "Player": player_val,
-                        "Prop Type": prop_val,
-                        "Line/Pick": line_val,
-                        "Odds": str(odds),
-                        "Status": "Pending"
-                    }
-                    row_data = list(row_dict.values())
+                        row_dict = {
+                            "Date": selected_date_str,
+                            "User": current_user,
+                            "Sport": sport,
+                            "Bet Type": bet_type,
+                            "Team": team_val,
+                            "Player": player_val,
+                            "Prop Type": prop_val,
+                            "Line/Pick": line_val,
+                            "Odds": str(odds),
+                            "Status": "Pending"
+                        }
+                        row_data = list(row_dict.values())
 
-                    try:
-                        if st.session_state.get("editing_pick", False):
-                            all_rows = picks_worksheet.get_all_values()
-                            for idx, row in enumerate(all_rows[1:], start=2):
-                                if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
-                                    picks_worksheet.delete_rows(idx)
-                                    break
-                            st.session_state.editing_pick = False
+                        try:
+                            if st.session_state.get("editing_pick", False):
+                                all_rows = picks_worksheet.get_all_values()
+                                for idx, row in enumerate(all_rows[1:], start=2):
+                                    if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
+                                        picks_worksheet.delete_rows(idx)
+                                        break
+                                st.session_state.editing_pick = False
 
-                        picks_worksheet.append_row(row_data)
+                            picks_worksheet.append_row(row_data)
 
-                        if "pick_submitted_cache" not in st.session_state:
-                            st.session_state.pick_submitted_cache = {}
-                        st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
+                            if "pick_submitted_cache" not in st.session_state:
+                                st.session_state.pick_submitted_cache = {}
+                            st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
 
-                        st.success(f"Pick successfully submitted for {current_user}!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error submitting pick: {e}")
+                            st.success(f"Pick successfully submitted for {current_user}!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error submitting pick: {e}")
 
             # Cancel Editing Option
             if st.session_state.get("editing_pick", False):
