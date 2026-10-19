@@ -673,17 +673,17 @@ if bet_type == "Player Prop":
         st.warning(f"No reference data found for Sport: '{sport}'.")
         selected_player, selected_prop, team = "", "", ""
 
-            if bet_type in ["Puck Line", "Run Line"]:
-                spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
-            elif bet_type in ["Spread"]:
-                spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
-            elif bet_type == "Player Prop" and selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
-                # Binary touchdown or goal scorer props don't need O/U or line values
-                ou_choice = "—"
-                value = ""
-            elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
-                ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
-                value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
+        if bet_type in ["Puck Line", "Run Line"]:
+            spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
+        elif bet_type in ["Spread"]:
+            spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
+        elif bet_type == "Player Prop" and selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+            # Binary touchdown or goal scorer props don't need O/U or line values
+            ou_choice = "—"
+            value = ""
+        elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
+            ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
+            value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
 
             odds = st.number_input("Odds (e.g., -117)", value=-110, key="input_odds")
 
