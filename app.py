@@ -137,17 +137,16 @@ if not st.session_state.logged_in:
     st.title("🔒 User Login")
     st.write("Welcome! Please select your profile and enter your password to continue.")
     
-    selected_user = st.selectbox("Select User", ["Gavin", "Chris", "Edwin"])
+    selected_user = st.selectbox("Select User", ["Gavin", ...])
     password_input = st.text_input("Enter Password", type="password")
     
-    if st.button("Log In", type="primary", use_container_width=True):
-        if password_input == USER_PASSWORDS.get(selected_user):
+    if st.button("Log In"):
+        if password_input == correct_password:
             st.session_state.logged_in = True
             st.session_state.current_user = selected_user
-            st.success(f"Welcome back, {selected_user}!")
             st.rerun()
         else:
-            st.error("Incorrect password. Please try again.")
+            st.error("Incorrect password.")
 
 # ==========================================
 # MAIN APP CONTENT
