@@ -663,8 +663,8 @@ if bet_type == "Player Prop":
         available_players, available_props = [], []
 
     if available_players and available_props:
-        selected_player = st.selectbox("Select Player", available_players, key="input_player")
-        selected_prop = st.selectbox("Prop Type", available_props, key="input_prop_type")
+        selected_player = st.selectbox("Select Player", available_players, key="prop_selected_player")
+        selected_prop = st.selectbox("Prop Type", available_props, key="prop_selected_prop_type")
 
         # Automatically resolve Team (Col D)
         player_row = df_players[df_players["Player_Name"] == selected_player]
@@ -682,8 +682,8 @@ if bet_type == "Player Prop":
             ou_choice = "—"
             value = ""
         elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
-            ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
-            value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
+            ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="prop_input_ou")
+            value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="prop_input_val")
 
             odds = st.number_input("Odds (e.g., -117)", value=-110, key="input_odds")
 
