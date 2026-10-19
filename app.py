@@ -643,73 +643,68 @@ else:
             st.write("")
             btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
             
-            if st.button(btn_label, use_container_width=True, type="primary"):
-                if bet_type == "Player Prop" and not selected_player:
-                    st.warning("Please select a valid player.")
-                elif bet_type != "Player Prop" and team == "— Select Team —":
-                    st.warning("Please select a valid team.")
-                elif bet_type in ["Puck Line", "Run Line"] and spread_choice == "— Select Line —":
-                    st.warning("Please select a valid Line option (-1.5 / +1.5).")
-                elif bet_type == "Spread" and spread_choice == "— Select Spread —":
-                    st.warning("Please select a valid Spread line.")
-                elif bet_type == "Player Prop" and not value:
-                    st.warning("Please enter a line value (e.g., 0.5, 2.5).")
-                else:
-                    
-                   # Format values cleanly based on bet type (Option 2 Schema)
-                    if bet_type == "Player Prop":
-                        team_val = team
-                        player_val = selected_player
-                        prop_val = selected_prop
-                        if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
-                            line_val = "Yes"
-                        else:
-                            line_val = f"{ou_choice} {value}".strip() if 'ou_choice' in locals() and 'value' in locals() else ""
-                    else:
-                        team_val = team
-                        player_val = "—"
-                        prop_val = "—"
-                        line_val = value if 'value' in locals() and value else (spread_choice if 'spread_choice' in locals() else (ou_choice if 'ou_choice' in locals() else "—"))
+            if st.button("Submit Pick", use_container_width=True):
+    # 1. VALIDATION CHECKS (Put it here!)
+    if bet_type == "Player Prop" and not selected_player:
+        st.warning("Please select a player.")
+    elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
+        st.warning("Please enter a line value (e.g., 0.5 SOG or 25.5 Pts).")
+    elif bet_type != "Player Prop" and not team:
+        st.warning("Please select a team.")
+    else:
+        # 2. FORMAT DATA & BUILD DICTIONARY
+        if bet_type == "Player Prop":
+            team_val = team
+            player_val = selected_player
+            prop_val = selected_prop
+            if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                line_val = "Yes"
+            else:
+                line_val = f"{ou_choice} {value}".strip()
+        else:
+            team_val = team
+            player_val = "—"
+            prop_val = "—"
+            line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
 
-                    # Build structured row dictionary matching the 10-column Google Sheet schema
-                    row_dict = {
-                        "Date": selected_date_str,
-                        "User": current_user,
-                        "Sport": sport,
-                        "Bet Type": bet_type,
-                        "Team": team_val,
-                        "Player": player_val,
-                        "Prop Type": prop_val,
-                        "Line/Pick": line_val,
-                        "Odds": str(odds),
-                        "Status": "Pending"
-                    }
-                    row_data = list(row_dict.values())
-                    
-                    try:
-                        # If editing an existing pick, remove the old row first
-                        if st.session_state.get("editing_pick", False):
-                            all_rows = picks_worksheet.get_all_values()
-                            for idx, row in enumerate(all_rows[1:], start=2):
-                                if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
-                                    picks_worksheet.delete_rows(idx)
-                                    break
-                            st.session_state.editing_pick = False
+        row_dict = {
+            "Date": selected_date_str,
+            "User": current_user,
+            "Sport": sport,
+            "Bet Type": bet_type,
+            "Team": team_val,
+            "Player": player_val,
+            "Prop Type": prop_val,
+            "Line/Pick": line_val,
+            "Odds": str(odds),
+            "Status": "Pending"
+        }
+        row_data = list(row_dict.values())
 
-                        # Append clean row to Google Sheets
-                        picks_worksheet.append_row(row_data)
-                        
-                        if "pick_submitted_cache" not in st.session_state:
-                            st.session_state.pick_submitted_cache = {}
-                        st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
-                        
-                        st.success(f"Pick successfully submitted for {current_user}!")
-                        st.rerun()
-                    except Exception as e:
-                        if "429" in str(e):
-                            st.error("⏳ Google Sheets rate limit reached. Please wait ~30-60 seconds and try submitting again.")
-                        else:
-                            st.error(f"Error submitting pick: {e}")
+        # 3. SAVE TO GOOGLE SHEETS (Your screenshot block starts here)
+        try:
+            if st.session_state.get("editing_pick", False):
+                all_rows = picks_worksheet.get_all_values()
+                for idx, row in enumerate(all_rows[1:], start=2):
+                    if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
+                        picks_worksheet.delete_rows(idx)
+                        break
+                st.session_state.editing_pick = False
+
+            # Append clean row to Google Sheets
+            picks_worksheet.append_row(row_data)
+
+            if "pick_submitted_cache" not in st.session_state:
+                st.session_state.pick_submitted_cache = {}
+            st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
+
+            st.success(f"Pick successfully submitted for {current_user}!")
+            st.rerun()
+        except Exception as e:
+            if "429" in str(e):
+                st.error("⏳ Google Sheets rate limit reached. Please wait ~30-60 seconds and try submitting again.")
+            else:
+                st.error(f"Error submitting pick: {e}")
 
             # Cancel Editing Option
             if st.session_state.get("editing_pick", False):
