@@ -583,12 +583,11 @@ else:
                     df_ref = load_ref_data(client)
                     # Clean column names and data to avoid spacing/casing issues
                     df_ref.columns = df_ref.columns.str.strip()
-                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
+                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
                     df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
                     
                     # Filter matching sport
-                    current_sport_clean = str(sport).strip().upper()
-                    df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].lower() != "nan")]
+                    df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
                     available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
                 except Exception as e:
                     st.error(f"Error loading Ref_Data: {e}")
