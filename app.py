@@ -580,41 +580,53 @@ else:
             # --- DYNAMIC CONDITIONAL UI FOR PLAYER PROPS VS TEAMS ---
             if bet_type == "Player Prop":
                 try:
+                    # Load Ref_Data dataframe using your existing helper
                     df_ref = load_ref_data(client)
+                    
+                    # Clean and normalize strings to ensure exact matching
                     df_ref.columns = df_ref.columns.str.strip()
                     df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
+                    df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
                     df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
-                    if "Prop_Type" in df_ref.columns:
-                        df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
+                    df_ref["Team"] = df_ref["Team"].astype(str).str.strip()
 
                     current_sport_clean = str(sport).strip().upper()
-                    df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
-                    available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
+                    
+                    # Step 1: Filter Ref_Data strictly down to the selected sport (Col A)
+                    df_sport = df_ref[df_ref["Sport"] == current_sport_clean]
+                    
+                    # Step 2: Extract all unique, valid players for this sport (Col C)
+                    df_players = df_sport[(df_sport["Player_Name"] != "") & (df_sport["Player_Name"].str.lower() != "nan")]
+                    available_players = sorted(df_players["Player_Name"].unique().tolist())
+                    
+                    # Step 3: Extract all unique, valid prop types for this sport (Col B)
+                    df_props = df_sport[(df_sport["Prop_Type"] != "") & (df_sport["Prop_Type"].str.lower() != "nan")]
+                    available_props = sorted(df_props["Prop_Type"].unique().tolist())
+
                 except Exception as e:
-                    st.error(f"Error loading Ref_Data: {e}")
-                    available_players = []
+                    st.error(f"Error filtering Ref_Data: {e}")
+                    available_players, available_props = [], []
 
-                if available_players:
+                if available_players and available_props:
+                    # Render dropdowns filtered by sport
                     selected_player = st.selectbox("Select Player", available_players, key="input_player")
+                    selected_prop = st.selectbox("Prop Type", available_props, key="input_prop_type")
 
-                    # Filter rows specifically for the chosen player to get their team and available prop types
-                    player_rows = df_sport_players[df_sport_players["Player_Name"] == selected_player]
-                    team = player_rows["Team"].values[0] if not player_rows.empty else ""
-
-                    prop_options = sorted([p for p in player_rows["Prop_Type"].unique().tolist() if p and p.lower() != "nan"]) if "Prop_Type" in player_rows.columns else []
-                    if not prop_options:
-                        prop_options = ["Shots on Goal", "Points", "Anytime Goal Scorer"]
-
-                    selected_prop = st.selectbox("Prop Type", prop_options, key="input_prop_type")
+                    # Automatically resolve the Team (Col D) for the chosen player
+                    player_row = df_players[df_players["Player_Name"] == selected_player]
+                    team = player_row["Team"].values[0] if not player_row.empty else ""
                 else:
-                    st.warning(f"No players found in Ref_Data sheet for Sport: '{sport}'.")
-                    selected_player = ""
-                    selected_prop = ""
-                    team = ""
-            else:
-                team = st.selectbox("Team / Selection", sports_teams[sport], key="input_team")
-                selected_player = ""
-                selected_prop = ""
+                    st.warning(f"No reference data found for Sport: '{sport}'. Please check your Ref_Data tab.")
+                    selected_player, selected_prop, team = "", "", ""
+
+                # Conditional Line/Value input UI based on prop type selection
+                if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                    ou_choice = "—"
+                    value = ""
+                    st.info(f"💡 {selected_prop} is a binary prop (defaults to 'Yes').")
+                else:
+                    ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
+                    value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
 
             spread_options = ["— Select Spread —"]
             for i in range(1, 91):
