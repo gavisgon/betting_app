@@ -10,21 +10,26 @@ def init_connection():
         "https://www.googleapis.com/auth/drive"
     ]
     
-    try:
-        # Load directly from Streamlit Secrets dictionary in memory
+    # Check if Streamlit Secrets are available (Live Cloud Environment)
+    if "gcp_service_account" in st.secrets:
         creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # Convert literal escaped newlines into real newline characters
+        # Ensure private key handles newlines cleanly
         if "private_key" in creds_dict:
             creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
             
         creds = service_account.Credentials.from_service_account_info(
             creds_dict, scopes=scope
         )
-    except Exception:
-        # Fallback for local development using your local credentials.json file
+    else:
+        # Local Development Environment (using local credentials.json file)
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cred_path = os.path.join(current_dir, "credentials.json")
+        
+        if not os.path.exists(cred_path):
+            st.error("Error: 'credentials.json' file not found locally, and 'gcp_service_account' is missing from Streamlit Secrets.")
+            st.stop()
+            
         creds = service_account.Credentials.from_service_account_file(
             cred_path, scopes=scope
         )
