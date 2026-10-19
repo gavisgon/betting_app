@@ -630,6 +630,10 @@ else:
                 spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
             elif bet_type in ["Spread"]:
                 spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
+            elif bet_type == "Player Prop" and selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                # Binary touchdown or goal scorer props don't need O/U or line values
+                ou_choice = "—"
+                value = ""
             elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
                 ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
                 value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
@@ -651,11 +655,11 @@ else:
                 elif bet_type == "Player Prop" and not value:
                     st.warning("Please enter a line value (e.g., 0.5, 2.5).")
                 else:
-                    # Format final team/selection and value strings cleanly
-                    # Format final team/selection and value strings cleanly
+                    
+                   # Format final team/selection and value strings cleanly
                     if bet_type == "Player Prop":
                         final_team_selection = f"{selected_player} ({selected_prop})"
-                        final_value = f"{ou_choice} {value}" if value else ou_choice
+                        final_value = f"{ou_choice} {value}" if value else ("Yes" if selected_prop in ["Anytime Goal Scorer", "TD Scorer"] else ou_choice)
                     else:
                         final_team_selection = team
                         final_value = value if value else spread_choice
