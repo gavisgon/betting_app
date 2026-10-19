@@ -13,13 +13,18 @@ def init_connection():
     
     cred_path = "credentials.json"
     
-    # If credentials.json doesn't exist locally, generate it dynamically from Streamlit Secrets
-    if not os.path.exists(cred_path) and "gcp_service_account" in st.secrets:
+    # Generate credentials.json dynamically from Streamlit Secrets with proper newlines
+    if "gcp_service_account" in st.secrets:
         creds_dict = dict(st.secrets["gcp_service_account"])
+        
+        # Convert literal escaped newlines into actual newline characters
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            
         with open(cred_path, "w") as f:
             json.dump(creds_dict, f)
             
-    # Load cleanly using the standard file method which never fails on formatting
+    # Load cleanly using the standard file method
     creds = service_account.Credentials.from_service_account_file(
         cred_path, scopes=scope
     )
