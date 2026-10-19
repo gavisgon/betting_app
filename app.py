@@ -581,14 +581,13 @@ else:
             if bet_type == "Player Prop":
                 try:
                     df_ref = load_ref_data(client)
-                    # Clean column names and data to avoid spacing/casing issues
                     df_ref.columns = df_ref.columns.str.strip()
                     df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
                     df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
-                    
-                    # Define clean sport variable inside try block
+                    if "Prop_Type" in df_ref.columns:
+                        df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
+
                     current_sport_clean = str(sport).strip().upper()
-                    
                     df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
                     available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
                 except Exception as e:
@@ -597,15 +596,25 @@ else:
 
                 if available_players:
                     selected_player = st.selectbox("Select Player", available_players, key="input_player")
-                    player_row = df_sport_players[df_sport_players["Player_Name"] == selected_player]
-                    team = player_row["Team"].values[0] if not player_row.empty else ""
+
+                    # Filter rows specifically for the chosen player to get their team and available prop types
+                    player_rows = df_sport_players[df_sport_players["Player_Name"] == selected_player]
+                    team = player_rows["Team"].values[0] if not player_rows.empty else ""
+
+                    prop_options = sorted([p for p in player_rows["Prop_Type"].unique().tolist() if p and p.lower() != "nan"]) if "Prop_Type" in player_rows.columns else []
+                    if not prop_options:
+                        prop_options = ["Shots on Goal", "Points", "Anytime Goal Scorer"]
+
+                    selected_prop = st.selectbox("Prop Type", prop_options, key="input_prop_type")
                 else:
                     st.warning(f"No players found in Ref_Data sheet for Sport: '{sport}'.")
                     selected_player = ""
+                    selected_prop = ""
                     team = ""
             else:
                 team = st.selectbox("Team / Selection", sports_teams[sport], key="input_team")
                 selected_player = ""
+                selected_prop = ""
 
             spread_options = ["— Select Spread —"]
             for i in range(1, 91):
@@ -643,9 +652,10 @@ else:
                     st.warning("Please enter a line value (e.g., 0.5, 2.5).")
                 else:
                     # Format final team/selection and value strings cleanly
+                    # Format final team/selection and value strings cleanly
                     if bet_type == "Player Prop":
-                        final_team_selection = f"{selected_player} ({team})"
-                        final_value = f"{ou_choice} {value}"
+                        final_team_selection = f"{selected_player} ({selected_prop})"
+                        final_value = f"{ou_choice} {value}" if value else ou_choice
                     else:
                         final_team_selection = team
                         final_value = value if value else spread_choice
