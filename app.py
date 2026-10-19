@@ -35,8 +35,6 @@ def init_connection():
 
 client = init_connection()
 
-client = init_connection()
-
 # Open Google Sheet Worksheets
 try:
     sheet = client.open("Sports Betting App Data")
@@ -45,6 +43,17 @@ try:
     parlays_worksheet = sheet.worksheet("Parlays")
 except Exception as e:
     st.error(f"Could not connect to Google Sheet. Make sure worksheets exist. Error: {e}")
+
+except Exception as e:
+    st.error(f"Could not connect to Google Sheet. Make sure worksheets ex...")
+
+# --- PLACE load_ref_data RIGHT HERE ---
+@st.cache_data(ttl=600)
+def load_ref_data(_client):
+    sheet = _client.open("Sports Betting App Data").worksheet("Ref_Data")
+    data = sheet.get_all_records()
+    return pd.DataFrame(data)
+
 
 # --- HELPER FUNCTIONS FOR ODDS & STANDINGS CALCULATIONS ---
 def american_to_decimal(american_odds):
