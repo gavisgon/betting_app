@@ -12,12 +12,6 @@ def init_connection():
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    @st.cache_resource
-def init_connection():
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
     
     # Try Streamlit Secrets first (for live cloud deployment)
     try:
