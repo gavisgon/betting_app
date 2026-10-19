@@ -141,6 +141,14 @@ if not st.session_state.logged_in:
     password_input = st.text_input("Enter Password", type="password")
     
     if st.button("Log In"):
+        # Define passwords for each user profile
+        user_passwords = {
+            "Gavin": "gavin123",  
+            "Chris": "chris123",
+            "Edwin": "edwin123"
+        }
+        correct_password = user_passwords.get(selected_user, "")
+
         if password_input == correct_password:
             st.session_state.logged_in = True
             st.session_state.current_user = selected_user
