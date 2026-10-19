@@ -1,41 +1,37 @@
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
-import os
 
 @st.cache_resource
 def init_connection():
+    # Grab your service account info from Streamlit secrets
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    
+    # Automatically clean up the private key formatting so it never fails
+    pk = creds_dict["private_key"]
+    pk = pk.replace("\\n", "\n") # Fix any escaped newlines
+    
+    # Ensure the proper header and footer are present
+    if not pk.strip().startswith("-----BEGIN PRIVATE KEY-----"):
+        pk = "-----BEGIN PRIVATE KEY-----\n" + pk.strip()
+    if not pk.strip().endswith("-----END PRIVATE KEY-----"):
+        pk = pk.strip() + "\n-----END PRIVATE KEY-----"
+        
+    creds_dict["private_key"] = pk
+    
+    # Set up the connection permissions
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
     
-    # Check if Streamlit Secrets are available (Live Cloud Environment)
-    if "gcp_service_account" in st.secrets:
-        creds_dict = dict(st.secrets["gcp_service_account"])
-        
-        # Ensure private key handles newlines cleanly
-        if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-            
-        creds = service_account.Credentials.from_service_account_info(
-            creds_dict, scopes=scope
-        )
-    else:
-        # Local Development Environment (using local credentials.json file)
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        cred_path = os.path.join(current_dir, "credentials.json")
-        
-        if not os.path.exists(cred_path):
-            st.error("Error: 'credentials.json' file not found locally, and 'gcp_service_account' is missing from Streamlit Secrets.")
-            st.stop()
-            
-        creds = service_account.Credentials.from_service_account_file(
-            cred_path, scopes=scope
-        )
-        
+    creds = service_account.Credentials.from_service_account_info(
+        creds_dict, scopes=scope
+    )
     client = gspread.authorize(creds)
     return client
+
+client = init_connection()
 
 client = init_connection()
 
