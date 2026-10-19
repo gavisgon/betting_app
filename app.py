@@ -551,9 +551,9 @@ else:
                     st.warning(f"Waiting for all 3 users to log picks before finalizing ({len(date_all_picks)}/3 picks submitted).")
 
         # SCENARIO 3: ENTRY FORM
-    else:
-        if st.session_state.editing_pick:
-            st.warning("⚠️ **Edit Mode:** Updating your existing pick.")
+        else:
+            if st.session_state.editing_pick:
+                st.warning("⚠️ **Edit Mode:** Updating your existing pick.")
 
             sport = st.selectbox("Sport", list(sports_teams.keys()), key="input_sport")
 
