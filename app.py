@@ -636,6 +636,43 @@ else:
             ou_choice = "—"
             value = ""
 
+# --- DYNAMIC REF_DATA FILTERING FOR PLAYER PROPS ---
+if bet_type == "Player Prop":
+    try:
+        df_ref = load_ref_data(client)
+        df_ref.columns = df_ref.columns.str.strip()
+        df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
+        df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
+        df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
+        df_ref["Team"] = df_ref["Team"].astype(str).str.strip()
+
+        current_sport_clean = str(sport).strip().upper()
+        
+        # Filter strictly by selected sport (Col A)
+        df_sport = df_ref[df_ref["Sport"] == current_sport_clean]
+        
+        # Get unique players (Col C) and props (Col B)
+        df_players = df_sport[(df_sport["Player_Name"] != "") & (df_sport["Player_Name"].str.lower() != "nan")]
+        available_players = sorted(df_players["Player_Name"].unique().tolist())
+        
+        df_props = df_sport[(df_sport["Prop_Type"] != "") & (df_sport["Prop_Type"].str.lower() != "nan")]
+        available_props = sorted(df_props["Prop_Type"].unique().tolist())
+
+    except Exception as e:
+        st.error(f"Error filtering Ref_Data: {e}")
+        available_players, available_props = [], []
+
+    if available_players and available_props:
+        selected_player = st.selectbox("Select Player", available_players, key="input_player")
+        selected_prop = st.selectbox("Prop Type", available_props, key="input_prop_type")
+
+        # Automatically resolve Team (Col D)
+        player_row = df_players[df_players["Player_Name"] == selected_player]
+        team = player_row["Team"].values[0] if not player_row.empty else ""
+    else:
+        st.warning(f"No reference data found for Sport: '{sport}'.")
+        selected_player, selected_prop, team = "", "", ""
+
             if bet_type in ["Puck Line", "Run Line"]:
                 spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
             elif bet_type in ["Spread"]:
