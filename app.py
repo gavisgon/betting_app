@@ -577,44 +577,35 @@ else:
 
             bet_type = st.selectbox("Bet Type", available_bet_types, key="input_bet_type")
 
-            # --- DYNAMIC CONDITIONAL UI FOR PLAYER PROPS VS TEAMS ---
-            if bet_type == "Player Prop":
-                try:
-                    df_ref = load_ref_data(client)
-                    df_ref.columns = df_ref.columns.str.strip()
-                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
-                    df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
-                    if "Prop_Type" in df_ref.columns:
-                        df_ref["Prop_Type"] = df_ref["Prop_Type"].astype(str).str.strip()
+        # Format values for saving to Google Sheets
+if bet_type == "Player Prop":
+    team_val = team
+    player_val = selected_player
+    prop_val = selected_prop
+    if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+        line_val = "Yes"
+    else:
+        line_val = f"{ou_choice} {value}"
+else:
+    team_val = team
+    player_val = "—"
+    prop_val = "—"
+    line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
 
-                    current_sport_clean = str(sport).strip().upper()
-                    df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
-                    available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
-                except Exception as e:
-                    st.error(f"Error loading Ref_Data: {e}")
-                    available_players = []
-
-                if available_players:
-                    selected_player = st.selectbox("Select Player", available_players, key="input_player")
-
-                    # Filter rows specifically for the chosen player to get their team and available prop types
-                    player_rows = df_sport_players[df_sport_players["Player_Name"] == selected_player]
-                    team = player_rows["Team"].values[0] if not player_rows.empty else ""
-
-                    prop_options = sorted([p for p in player_rows["Prop_Type"].unique().tolist() if p and p.lower() != "nan"]) if "Prop_Type" in player_rows.columns else []
-                    if not prop_options:
-                        prop_options = ["Shots on Goal", "Points", "Anytime Goal Scorer"]
-
-                    selected_prop = st.selectbox("Prop Type", prop_options, key="input_prop_type")
-                else:
-                    st.warning(f"No players found in Ref_Data sheet for Sport: '{sport}'.")
-                    selected_player = ""
-                    selected_prop = ""
-                    team = ""
-            else:
-                team = st.selectbox("Team / Selection", sports_teams[sport], key="input_team")
-                selected_player = ""
-                selected_prop = ""
+# Append row to Google Sheets
+new_pick_row = [
+    selected_date.strftime("%Y-%m-%d"),
+    current_user,
+    sport,
+    bet_type,
+    team_val,
+    player_val,
+    prop_val,
+    line_val,
+    odds,
+    "Pending"
+]
+picks_worksheet.append_row(new_pick_row)
 
             spread_options = ["— Select Spread —"]
             for i in range(1, 91):
