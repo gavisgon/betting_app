@@ -12,15 +12,22 @@ def init_connection():
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    cred_path = os.path.join(current_dir, "credentials.json")
+    @st.cache_resource
+def init_connection():
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
     
+    # Try Streamlit Secrets first (for live cloud deployment)
     try:
-        creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
-    except:
-        # Fallback for Streamlit Community Cloud deployment
         creds_dict = dict(st.secrets["gcp_service_account"])
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    except Exception:
+        # Fallback to local credentials.json file (for your computer)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        cred_path = os.path.join(current_dir, "credentials.json")
+        creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
         
     client = gspread.authorize(creds)
     return client
