@@ -644,7 +644,7 @@ else:
             btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
             
             if st.button("Submit Pick", use_container_width=True):
-    # 1. VALIDATION CHECKS (Put it here!)
+    # Indented 4 spaces inside the submit button block:
     if bet_type == "Player Prop" and not selected_player:
         st.warning("Please select a player.")
     elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
@@ -652,7 +652,7 @@ else:
     elif bet_type != "Player Prop" and not team:
         st.warning("Please select a team.")
     else:
-        # 2. FORMAT DATA & BUILD DICTIONARY
+        # Indented 8 spaces inside the else block:
         if bet_type == "Player Prop":
             team_val = team
             player_val = selected_player
@@ -681,7 +681,6 @@ else:
         }
         row_data = list(row_dict.values())
 
-        # 3. SAVE TO GOOGLE SHEETS (Your screenshot block starts here)
         try:
             if st.session_state.get("editing_pick", False):
                 all_rows = picks_worksheet.get_all_values()
@@ -691,7 +690,6 @@ else:
                         break
                 st.session_state.editing_pick = False
 
-            # Append clean row to Google Sheets
             picks_worksheet.append_row(row_data)
 
             if "pick_submitted_cache" not in st.session_state:
