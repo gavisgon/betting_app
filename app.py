@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
@@ -10,29 +11,19 @@ def init_connection():
         "https://www.googleapis.com/auth/drive"
     ]
     
-    try:
+    cred_path = "credentials.json"
+    
+    # If credentials.json doesn't exist locally, generate it dynamically from Streamlit Secrets
+    if not os.path.exists(cred_path) and "gcp_service_account" in st.secrets:
         creds_dict = dict(st.secrets["gcp_service_account"])
-        
-        # Bulletproof newline handler for the private key
-        if "private_key" in creds_dict:
-            pk = creds_dict["private_key"]
-            # Replace escaped newlines or format them cleanly
-            if "\\n" in pk:
-                creds_dict["private_key"] = pk.replace("\\n", "\n")
-            elif not pk.startswith("-----BEGIN PRIVATE KEY-----"):
-                creds_dict["private_key"] = f"-----BEGIN PRIVATE KEY-----\n{pk}\n-----END PRIVATE KEY-----"
-                
-        creds = service_account.Credentials.from_service_account_info(
-            creds_dict, scopes=scope
-        )
-    except Exception:
-        # Fallback for local development using credentials.json
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        cred_path = os.path.join(current_dir, "credentials.json")
-        creds = service_account.Credentials.from_service_account_file(
-            cred_path, scopes=scope
-        )
-        
+        with open(cred_path, "w") as f:
+            json.dump(creds_dict, f)
+            
+    # Load cleanly using the standard file method which never fails on formatting
+    creds = service_account.Credentials.from_service_account_file(
+        cred_path, scopes=scope
+    )
+    
     client = gspread.authorize(creds)
     return client
 
