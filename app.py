@@ -644,65 +644,61 @@ else:
             btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
             
             if st.button("Submit Pick", use_container_width=True):
-    # Indented 4 spaces inside the submit button block:
-    if bet_type == "Player Prop" and not selected_player:
-        st.warning("Please select a player.")
-    elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
-        st.warning("Please enter a line value (e.g., 0.5 SOG or 25.5 Pts).")
-    elif bet_type != "Player Prop" and not team:
-        st.warning("Please select a team.")
-    else:
-        # Indented 8 spaces inside the else block:
-        if bet_type == "Player Prop":
-            team_val = team
-            player_val = selected_player
-            prop_val = selected_prop
-            if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
-                line_val = "Yes"
+            if bet_type == "Player Prop" and not selected_player:
+                st.warning("Please select a player.")
+            elif bet_type == "Player Prop" and selected_prop not in ["Anytime Goal Scorer", "TD Scorer"] and not value:
+                st.warning("Please enter a line value (e.g., 0.5 SOG or 25.5 Pts).")
+            elif bet_type != "Player Prop" and not team:
+                st.warning("Please select a team.")
             else:
-                line_val = f"{ou_choice} {value}".strip()
-        else:
-            team_val = team
-            player_val = "—"
-            prop_val = "—"
-            line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
+                # Build payload dictionary
+                if bet_type == "Player Prop":
+                    team_val = team
+                    player_val = selected_player
+                    prop_val = selected_prop
+                    if selected_prop in ["Anytime Goal Scorer", "TD Scorer"]:
+                        line_val = "Yes"
+                    else:
+                        line_val = f"{ou_choice} {value}".strip()
+                else:
+                    team_val = team
+                    player_val = "—"
+                    prop_val = "—"
+                    line_val = value if value else (spread_choice if 'spread_choice' in locals() else ou_choice)
 
-        row_dict = {
-            "Date": selected_date_str,
-            "User": current_user,
-            "Sport": sport,
-            "Bet Type": bet_type,
-            "Team": team_val,
-            "Player": player_val,
-            "Prop Type": prop_val,
-            "Line/Pick": line_val,
-            "Odds": str(odds),
-            "Status": "Pending"
-        }
-        row_data = list(row_dict.values())
+                row_dict = {
+                    "Date": selected_date_str,
+                    "User": current_user,
+                    "Sport": sport,
+                    "Bet Type": bet_type,
+                    "Team": team_val,
+                    "Player": player_val,
+                    "Prop Type": prop_val,
+                    "Line/Pick": line_val,
+                    "Odds": str(odds),
+                    "Status": "Pending"
+                }
+                row_data = list(row_dict.values())
 
-        try:
-            if st.session_state.get("editing_pick", False):
-                all_rows = picks_worksheet.get_all_values()
-                for idx, row in enumerate(all_rows[1:], start=2):
-                    if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
-                        picks_worksheet.delete_rows(idx)
-                        break
-                st.session_state.editing_pick = False
+                try:
+                    if st.session_state.get("editing_pick", False):
+                        all_rows = picks_worksheet.get_all_values()
+                        for idx, row in enumerate(all_rows[1:], start=2):
+                            if len(row) >= 2 and str(row[0]).strip() == selected_date_str.strip() and str(row[1]).strip() == current_user.strip():
+                                picks_worksheet.delete_rows(idx)
+                                break
+                        st.session_state.editing_pick = False
 
-            picks_worksheet.append_row(row_data)
+                    picks_worksheet.append_row(row_data)
 
-            if "pick_submitted_cache" not in st.session_state:
-                st.session_state.pick_submitted_cache = {}
-            st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
+                    if "pick_submitted_cache" not in st.session_state:
+                        st.session_state.pick_submitted_cache = {}
+                    st.session_state.pick_submitted_cache[f"{selected_date_str}_{current_user}"] = row_dict
 
-            st.success(f"Pick successfully submitted for {current_user}!")
-            st.rerun()
-        except Exception as e:
-            if "429" in str(e):
-                st.error("⏳ Google Sheets rate limit reached. Please wait ~30-60 seconds and try submitting again.")
-            else:
-                st.error(f"Error submitting pick: {e}")
+                    st.success(f"Pick successfully submitted for {current_user}!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error submitting pick: {e}")
 
             # Cancel Editing Option
             if st.session_state.get("editing_pick", False):
