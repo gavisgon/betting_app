@@ -11,8 +11,11 @@ def init_connection():
     ]
     
     try:
-        # Load credentials from Streamlit Cloud Secrets using modern google-auth
+        # Load from Streamlit Cloud Secrets and format newlines cleanly
         creds_dict = dict(st.secrets["gcp_service_account"])
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            
         creds = service_account.Credentials.from_service_account_info(
             creds_dict, scopes=scope
         )
