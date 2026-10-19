@@ -1,4 +1,3 @@
-import json
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
@@ -12,10 +11,13 @@ def init_connection():
     ]
     
     try:
-        # Load the raw JSON string from Streamlit secrets
-        creds_info = json.loads(st.secrets["text_key"])
+        # Load directly from the [gcp_service_account] section in secrets
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            
         creds = service_account.Credentials.from_service_account_info(
-            creds_info, scopes=scope
+            creds_dict, scopes=scope
         )
     except Exception:
         # Fallback for local development using credentials.json file
