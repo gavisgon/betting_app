@@ -551,7 +551,7 @@ else:
                     st.warning(f"Waiting for all 3 users to log picks before finalizing ({len(date_all_picks)}/3 picks submitted).")
 
         # SCENARIO 3: ENTRY FORM
-        else:
+     else:
             if st.session_state.editing_pick:
                 st.warning("⚠️ **Edit Mode:** Updating your existing pick.")
 
@@ -571,7 +571,29 @@ else:
             available_bet_types = sport_bet_types.get(sport, default_bet_types)
 
             bet_type = st.selectbox("Bet Type", available_bet_types, key="input_bet_type")
-            team = st.selectbox("Team / Selection", sports_teams[sport], key="input_team")
+
+            # --- DYNAMIC CONDITIONAL UI FOR PLAYER PROPS VS TEAMS ---
+            if bet_type == "Player Prop":
+                # Load players dynamically from your Ref_Data sheet
+                try:
+                    df_ref = load_ref_data(client)
+                    df_sport_players = df_ref[(df_ref["Sport"] == sport) & (df_ref["Player_Name"] != "")]
+                    available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
+                except Exception:
+                    available_players = []
+
+                if available_players:
+                    selected_player = st.selectbox("Select Player", available_players, key="input_player")
+                    # Grab team automatically in the background
+                    player_row = df_sport_players[df_sport_players["Player_Name"] == selected_player]
+                    team = player_row["Team"].values[0] if not player_row.empty else ""
+                else:
+                    st.warning("No players found in Ref_Data sheet for this sport.")
+                    selected_player = ""
+                    team = ""
+            else:
+                team = st.selectbox("Team / Selection", sports_teams[sport], key="input_team")
+                selected_player = ""
 
             spread_options = ["— Select Spread —"]
             for i in range(1, 91):
@@ -587,9 +609,9 @@ else:
                 spread_choice = st.selectbox("Line Option", ["— Select Line —", "-1.5", "+1.5", "-2.5", "+2.5"], key="input_line")
             elif bet_type in ["Spread"]:
                 spread_choice = st.selectbox("Spread Line", spread_options, key="input_spread")
-            elif bet_type in ["Team Total", "Game Total", "Over/Under"]:
+            elif bet_type in ["Team Total", "Game Total", "Over/Under", "Player Prop"]:
                 ou_choice = st.selectbox("Over / Under", ["Over", "Under"], key="input_ou")
-                value = st.text_input("Total Value (e.g., 6.5 or 210.5)", key="input_val")
+                value = st.text_input("Line Value (e.g., 0.5 SOG or 25.5 Pts)", key="input_val")
 
             odds = st.number_input("Odds (e.g., -117)", value=-110, key="input_odds")
 
@@ -597,21 +619,32 @@ else:
             btn_label = "Update Pick" if st.session_state.editing_pick else "Submit Pick"
             
             if st.button(btn_label, use_container_width=True, type="primary"):
-                if team == "— Select Team —":
+                if bet_type == "Player Prop" and not selected_player:
+                    st.warning("Please select a valid player.")
+                elif bet_type != "Player Prop" and team == "— Select Team —":
                     st.warning("Please select a valid team.")
                 elif bet_type in ["Puck Line", "Run Line"] and spread_choice == "— Select Line —":
                     st.warning("Please select a valid Line option (-1.5 / +1.5).")
                 elif bet_type == "Spread" and spread_choice == "— Select Spread —":
                     st.warning("Please select a valid Spread line.")
+                elif bet_type == "Player Prop" and not value:
+                    st.warning("Please enter a line value (e.g., 0.5, 2.5).")
                 else:
-                    final_value = value if value else spread_choice
-                 # Build structured row dictionary
+                    # Format final team/selection and value strings cleanly
+                    if bet_type == "Player Prop":
+                        final_team_selection = f"{selected_player} ({team})"
+                        final_value = f"{ou_choice} {value}"
+                    else:
+                        final_team_selection = team
+                        final_value = value if value else spread_choice
+
+                    # Build structured row dictionary
                     row_dict = {
                         "Date": selected_date_str,
                         "User": current_user,
                         "Sport": sport,
                         "Bet Type": bet_type,
-                        "Team / Selection": team,
+                        "Team / Selection": final_team_selection,
                         "Over/Under": ou_choice,
                         "Value": final_value,
                         "Odds": str(odds),
@@ -621,7 +654,6 @@ else:
                     
                     try:
                         # Use existing picks_worksheet variable from top of script
-                        # to avoid making extra client.open() read calls
                         if st.session_state.get("editing_pick", False):
                             all_rows = picks_worksheet.get_all_values()
                             for idx, row in enumerate(all_rows[1:], start=2):
