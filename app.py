@@ -1,11 +1,8 @@
 import streamlit as st
-import pandas as pd
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 import os
-import datetime
 
-# --- GOOGLE SHEETS CONNECTION SETUP ---
 @st.cache_resource
 def init_connection():
     scope = [
@@ -13,17 +10,19 @@ def init_connection():
         "https://www.googleapis.com/auth/drive"
     ]
     
-    # Try Streamlit Secrets first (for live cloud deployment)
     try:
+        # Load credentials from Streamlit Cloud Secrets using modern google-auth
         creds_dict = dict(st.secrets["gcp_service_account"])
-        if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        creds = service_account.Credentials.from_service_account_info(
+            creds_dict, scopes=scope
+        )
     except Exception:
-        # Fallback to local credentials.json file (for your computer)
+        # Fallback for local development using credentials.json
         current_dir = os.path.dirname(os.path.abspath(__file__))
         cred_path = os.path.join(current_dir, "credentials.json")
-        creds = ServiceAccountCredentials.from_json_keyfile_name(cred_path, scope)
+        creds = service_account.Credentials.from_service_account_file(
+            cred_path, scopes=scope
+        )
         
     client = gspread.authorize(creds)
     return client
