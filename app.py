@@ -15,7 +15,10 @@ def init_connection():
     
     # Try Streamlit Secrets first (for live cloud deployment)
     try:
-        creds_dict = dict(st.secrets["gcp_service_account"])
+       creds_dict = dict(st.secrets["gcp_service_account"])
+        # Ensure private key handles newlines correctly
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     except Exception:
         # Fallback to local credentials.json file (for your computer)
