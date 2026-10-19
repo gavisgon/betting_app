@@ -44,16 +44,12 @@ try:
 except Exception as e:
     st.error(f"Could not connect to Google Sheet. Make sure worksheets exist. Error: {e}")
 
-except Exception as e:
-    st.error(f"Could not connect to Google Sheet. Make sure worksheets ex...")
-
 # --- PLACE load_ref_data RIGHT HERE ---
 @st.cache_data(ttl=600)
 def load_ref_data(_client):
     sheet = _client.open("Sports Betting App Data").worksheet("Ref_Data")
     data = sheet.get_all_records()
     return pd.DataFrame(data)
-
 
 # --- HELPER FUNCTIONS FOR ODDS & STANDINGS CALCULATIONS ---
 def american_to_decimal(american_odds):
@@ -587,7 +583,7 @@ else:
                     df_ref = load_ref_data(client)
                     # Clean column names and data to avoid spacing/casing issues
                     df_ref.columns = df_ref.columns.str.strip()
-                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
+                    df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
                     df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
                     
                     # Filter matching sport
