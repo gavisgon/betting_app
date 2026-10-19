@@ -586,7 +586,9 @@ else:
                     df_ref["Sport"] = df_ref["Sport"].astype(str).str.strip().str.upper()
                     df_ref["Player_Name"] = df_ref["Player_Name"].astype(str).str.strip()
                     
-                    # Filter matching sport
+                    # Define clean sport variable inside try block
+                    current_sport_clean = str(sport).strip().upper()
+                    
                     df_sport_players = df_ref[(df_ref["Sport"] == current_sport_clean) & (df_ref["Player_Name"] != "") & (df_ref["Player_Name"].str.lower() != "nan")]
                     available_players = sorted(df_sport_players["Player_Name"].unique().tolist())
                 except Exception as e:
